@@ -16,17 +16,23 @@ type Config struct {
 	ButtonRadius                  int  `toml:"button_radius"`
 	ButtonBackground              bool `toml:"button_background"`
 	Brightness                    float32
-	AutoConnect                   bool `toml:"auto_connect"`
-	SupportButtonReleaseLongPress bool `toml:"support_button_release_long_press"`
+	AutoConnect                   bool     `toml:"auto_connect"`
+	SupportButtonReleaseLongPress bool     `toml:"support_button_release_long_press"`
+	ShellCommand                  string   `toml:"shell_command"`
+	ShellArguments                []string `toml:"shell_arguments"`
 
 	Buttons []ButtonConfig
 }
 
 type ButtonConfig struct {
-	Row    int
-	Column int
-	Color  string
-	Icon   string
+	Row                    int
+	Column                 int
+	Color                  string
+	Icon                   string
+	ButtonPress            string `toml:"button_press"`
+	ButtonRelease          string `toml:"button_release"`
+	ButtonLongPress        string `toml:"button_long_press"`
+	ButtonLongPressRelease string `toml:"button_long_press_release"`
 }
 
 func ReadConfig() Config {
@@ -40,6 +46,9 @@ func ReadConfig() Config {
 		Brightness:                    0.3,
 		AutoConnect:                   false,
 		SupportButtonReleaseLongPress: true,
+
+		ShellCommand:   "bash",
+		ShellArguments: []string{"-c"},
 
 		Buttons: []ButtonConfig{},
 	}
