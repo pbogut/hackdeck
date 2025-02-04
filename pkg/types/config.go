@@ -26,6 +26,7 @@ type ButtonConfig struct {
 	Row    int
 	Column int
 	Color  string
+	Icon   string
 }
 
 func ReadConfig() Config {

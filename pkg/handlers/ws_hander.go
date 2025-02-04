@@ -41,7 +41,7 @@ func handleGetButtons() types.Buttons {
 	buttons := types.NewGetButtons()
 
 	for _, b := range config.Buttons {
-		buttons.AddButton(types.NewButton(b.Row, b.Column).SetColor(b.Color))
+		buttons.AddButton(types.NewButton(b.Row, b.Column).SetColor(b.Color).SetIconFromPath(b.Icon))
 	}
 
 	return buttons
