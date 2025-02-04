@@ -9,6 +9,8 @@ import (
 	"github.com/pbogut/hackdeck/pkg/types"
 )
 
+var config types.Config
+
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true // Allow all connections (for development purposes)
@@ -21,15 +23,15 @@ func handleConnected(msg []byte) types.GetConfig {
 
 	get_config := types.GetConfig{
 		Method:                        "GET_CONFIG",
-		Rows:                          4,
-		Columns:                       5,
-		ButtonSpacing:                 10,
-		ButtonRadius:                  40,
-		ButtonBackground:              true,
-		Brightness:                    0.3,
+		Rows:                          config.Rows,
+		Columns:                       config.Columns,
+		ButtonSpacing:                 config.ButtonSpacing,
+		ButtonRadius:                  config.ButtonRadius,
+		ButtonBackground:              config.ButtonBackground,
+		Brightness:                    config.Brightness,
 		AutoConnect:                   false,
 		WakeLock:                      "Connected",
-		SupportButtonReleaseLongPress: true,
+		SupportButtonReleaseLongPress: config.SupportButtonReleaseLongPress,
 	}
 
 	return get_config
@@ -94,6 +96,8 @@ func msgToXY(msg []byte) (int, int) {
 
 // WebSocket handler
 func WsHandler(w http.ResponseWriter, r *http.Request) {
+	config = types.ReadConfig()
+
 	// Upgrade the HTTP connection to a WebSocket connection
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
