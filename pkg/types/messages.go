@@ -1,7 +1,31 @@
 package types
 
+import (
+	"strconv"
+	"strings"
+)
+
 type Method struct {
 	Method string `json:"Method"`
+}
+
+type ClickAction struct {
+	Method  string `json:"Method"`
+	Message string `json:"Message"`
+}
+
+func (c *ClickAction) GetXY() (int, int) {
+	pos := strings.Split(c.Message, "_")
+	x, err := strconv.Atoi(pos[0])
+	if err != nil {
+		return -1, -1
+	}
+	y, err := strconv.Atoi(pos[1])
+	if err != nil {
+		return -1, -1
+	}
+
+	return x, y
 }
 
 type Connected struct {
@@ -56,4 +80,33 @@ type Buttons struct {
 	Method string `json:"Method"`
 	// "Buttons": []
 	Buttons []Button `json:"Buttons"`
+}
+
+func (b *Buttons) AddButton(button Button) *Buttons {
+	b.Buttons = append(b.Buttons, button)
+	return b
+}
+
+func NewButton(x, y int) Button {
+	return Button{
+		PositionX:          y, // !sic
+		PositionY:          x, // !sic
+		IconBase64:         "",
+		LabelBase64:        "",
+		BackgroundColorHex: "#232323",
+	}
+}
+
+func NewGetButtons() Buttons {
+	return Buttons{
+		Method:  "GET_BUTTONS",
+		Buttons: []Button{},
+	}
+}
+
+func NewUpdateButton() Buttons {
+	return Buttons{
+		Method:  "UPDATE_BUTTON",
+		Buttons: []Button{},
+	}
 }
