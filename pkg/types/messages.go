@@ -87,14 +87,19 @@ func (b *Buttons) AddButton(button Button) *Buttons {
 	return b
 }
 
-func NewButton(x, y int) Button {
+func NewButton(row, col int) Button {
 	return Button{
-		PositionX:          y, // !sic
-		PositionY:          x, // !sic
+		PositionX:          col, // !sic
+		PositionY:          row, // !sic
 		IconBase64:         "",
 		LabelBase64:        "",
 		BackgroundColorHex: "#232323",
 	}
+}
+
+func (b Button) SetColor(color string) Button {
+	b.BackgroundColorHex = color
+	return b
 }
 
 func NewGetButtons() Buttons {

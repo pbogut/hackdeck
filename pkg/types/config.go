@@ -18,6 +18,14 @@ type Config struct {
 	Brightness                    float32
 	AutoConnect                   bool `toml:"auto_connect"`
 	SupportButtonReleaseLongPress bool `toml:"support_button_release_long_press"`
+
+	Buttons []ButtonConfig
+}
+
+type ButtonConfig struct {
+	Row    int
+	Column int
+	Color  string
 }
 
 func ReadConfig() Config {
@@ -31,6 +39,8 @@ func ReadConfig() Config {
 		Brightness:                    0.3,
 		AutoConnect:                   false,
 		SupportButtonReleaseLongPress: true,
+
+		Buttons: []ButtonConfig{},
 	}
 
 	_, err := os.Stat(configFile)
