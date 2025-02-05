@@ -109,32 +109,24 @@ func execAction(conn *websocket.Conn, row, col, status int) {
 	}
 }
 
-func handleButtonPress(conn *websocket.Conn, row, col int) types.Buttons {
+func handleButtonPress(conn *websocket.Conn, row, col int) {
 	fmt.Printf("Button pressed at row: %d, col: %d\n", row, col)
 	go execAction(conn, row, col, types.BUTTON_PRESS)
-
-	return types.NewUpdateButton()
 }
 
-func handleButtonLongPress(conn *websocket.Conn, row, col int) types.Buttons {
+func handleButtonLongPress(conn *websocket.Conn, row, col int) {
 	fmt.Printf("Button long pressed at row: %d, col: %d\n", row, col)
 	go execAction(conn, row, col, types.BUTTON_LONG_PRESS)
-
-	return types.NewUpdateButton()
 }
 
-func handleButtonRelease(conn *websocket.Conn, row, col int) types.Buttons {
+func handleButtonRelease(conn *websocket.Conn, row, col int) {
 	fmt.Printf("Button released at row: %d, col: %d\n", row, col)
 	go execAction(conn, row, col, types.BUTTON_RELEASE)
-
-	return types.NewUpdateButton()
 }
 
-func handleButtonLongPressRelease(conn *websocket.Conn, row, col int) types.Buttons {
+func handleButtonLongPressRelease(conn *websocket.Conn, row, col int) {
 	fmt.Printf("Button long press released at row: %d, col: %d\n", row, col)
 	go execAction(conn, row, col, types.BUTTON_LONG_PRESS_RELEASE)
-
-	return types.NewUpdateButton()
 }
 
 func msgToRowCol(msg []byte) (int, int) {
@@ -171,27 +163,29 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 		switch method.Method {
 		case "BUTTON_LONG_PRESS":
 			row, col := msgToRowCol(msg)
-			result = handleButtonLongPress(conn, row, col)
+			handleButtonLongPress(conn, row, col)
 		case "BUTTON_LONG_PRESS_RELEASE":
 			row, col := msgToRowCol(msg)
-			result = handleButtonLongPressRelease(conn, row, col)
+			handleButtonLongPressRelease(conn, row, col)
 		case "BUTTON_PRESS":
 			row, col := msgToRowCol(msg)
-			result = handleButtonPress(conn, row, col)
+			handleButtonPress(conn, row, col)
 		case "BUTTON_RELEASE":
 			orw, col := msgToRowCol(msg)
-			result = handleButtonRelease(conn, orw, col)
+			handleButtonRelease(conn, orw, col)
 		case "GET_BUTTONS":
 			result = handleGetButtons()
 		case "CONNECTED":
 			result = handleConnected(msg)
 		}
 
-		response, err := json.Marshal(result)
-		if err != nil {
-			break
+		if result != nil {
+			response, err := json.Marshal(result)
+			if err != nil {
+				break
+			}
+			conn.WriteMessage(messageType, response)
 		}
-		conn.WriteMessage(messageType, response)
 
 		// Print the received message
 		fmt.Printf("Received: %s\n", msg)
