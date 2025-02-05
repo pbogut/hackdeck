@@ -73,38 +73,39 @@ func execAction(a Action) {
 	if action != "" {
 		args := config.ShellArguments
 		args = append(args, action)
+
+		fmt.Println("Execute command:", action)
+		fmt.Println("Execute:", config.ShellCommand, args)
+
 		cmd := exec.Command(config.ShellCommand, args...)
 		cmd.Run()
-
-		fmt.Println("Executed command:", action)
-		fmt.Println("Executed args:", config.ShellCommand, config.ShellArguments)
 	}
 }
 
 func handleButtonPress(row, col int) types.Buttons {
 	fmt.Printf("Button pressed at row: %d, col: %d\n", row, col)
-	execAction(Action{row, col, BUTTON_PRESS})
+	go execAction(Action{row, col, BUTTON_PRESS})
 
 	return types.NewUpdateButton()
 }
 
 func handleButtonLongPress(row, col int) types.Buttons {
 	fmt.Printf("Button long pressed at row: %d, col: %d\n", row, col)
-	execAction(Action{row, col, BUTTON_LONG_PRESS})
+	go execAction(Action{row, col, BUTTON_LONG_PRESS})
 
 	return types.NewUpdateButton()
 }
 
 func handleButtonRelease(row, col int) types.Buttons {
 	fmt.Printf("Button released at row: %d, col: %d\n", row, col)
-	execAction(Action{row, col, BUTTON_RELEASE})
+	go execAction(Action{row, col, BUTTON_RELEASE})
 
 	return types.NewUpdateButton()
 }
 
 func handleButtonLongPressRelease(row, col int) types.Buttons {
 	fmt.Printf("Button long press released at row: %d, col: %d\n", row, col)
-	execAction(Action{row, col, BUTTON_LONG_PRESS_RELEASE})
+	go execAction(Action{row, col, BUTTON_LONG_PRESS_RELEASE})
 
 	return types.NewUpdateButton()
 }
