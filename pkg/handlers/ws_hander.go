@@ -10,21 +10,9 @@ import (
 	"github.com/pbogut/hackdeck/pkg/types"
 )
 
-const (
-	BUTTON_PRESS = iota
-	BUTTON_RELEASE
-	BUTTON_LONG_PRESS
-	BUTTON_LONG_PRESS_RELEASE
-)
-
-type Action struct {
-	row   int
-	col   int
-	state int
-}
+var state types.State
 
 var config types.Config
-var actions map[Action]string
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
@@ -54,22 +42,21 @@ func handleConnected(msg []byte) types.GetConfig {
 
 func handleGetButtons() types.Buttons {
 	buttons := types.NewGetButtons()
-	size := config.Rows * config.Columns * 4
-	actions = make(map[Action]string, size)
 
-	for _, b := range config.Buttons {
-		buttons.AddButton(types.NewButton(b.Row, b.Column).SetColor(b.Color).SetIconFromPath(b.Icon))
-		actions[Action{b.Row, b.Column, BUTTON_PRESS}] = b.ButtonPress
-		actions[Action{b.Row, b.Column, BUTTON_RELEASE}] = b.ButtonRelease
-		actions[Action{b.Row, b.Column, BUTTON_LONG_PRESS}] = b.ButtonLongPress
-		actions[Action{b.Row, b.Column, BUTTON_LONG_PRESS_RELEASE}] = b.ButtonLongPressRelease
+	state.Init(config.Rows, config.Columns)
+
+	for _, btnCfg := range config.Buttons {
+		button := types.NewButton(btnCfg.Row, btnCfg.Column)
+		button.SetColor(btnCfg.Color)
+		button.SetIconFromPath(btnCfg.Icon)
+		buttons.AddButton(button)
+		state.AddButton(button, btnCfg)
 	}
 
 	return buttons
 }
 
-func execAction(a Action) {
-	action := actions[a]
+func execAction(action string) {
 	if action != "" {
 		args := config.ShellArguments
 		args = append(args, action)
@@ -84,28 +71,32 @@ func execAction(a Action) {
 
 func handleButtonPress(row, col int) types.Buttons {
 	fmt.Printf("Button pressed at row: %d, col: %d\n", row, col)
-	go execAction(Action{row, col, BUTTON_PRESS})
+	command := state.GetCmd(row, col, types.BUTTON_PRESS)
+	go execAction(command)
 
 	return types.NewUpdateButton()
 }
 
 func handleButtonLongPress(row, col int) types.Buttons {
 	fmt.Printf("Button long pressed at row: %d, col: %d\n", row, col)
-	go execAction(Action{row, col, BUTTON_LONG_PRESS})
+	command := state.GetCmd(row, col, types.BUTTON_LONG_PRESS)
+	go execAction(command)
 
 	return types.NewUpdateButton()
 }
 
 func handleButtonRelease(row, col int) types.Buttons {
 	fmt.Printf("Button released at row: %d, col: %d\n", row, col)
-	go execAction(Action{row, col, BUTTON_RELEASE})
+	command := state.GetCmd(row, col, types.BUTTON_RELEASE)
+	go execAction(command)
 
 	return types.NewUpdateButton()
 }
 
 func handleButtonLongPressRelease(row, col int) types.Buttons {
 	fmt.Printf("Button long press released at row: %d, col: %d\n", row, col)
-	go execAction(Action{row, col, BUTTON_LONG_PRESS_RELEASE})
+	command := state.GetCmd(row, col, types.BUTTON_LONG_PRESS_RELEASE)
+	go execAction(command)
 
 	return types.NewUpdateButton()
 }

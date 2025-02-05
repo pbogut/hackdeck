@@ -100,24 +100,21 @@ func NewButton(row, col int) Button {
 	}
 }
 
-func (b Button) SetColor(color string) Button {
+func (b *Button) SetColor(color string) {
 	b.BackgroundColorHex = color
-	return b
 }
 
-func (b Button) SetIconFromPath(path string) Button {
+func (b *Button) SetIconFromPath(path string) {
 	if path == "" {
-		return b
+		return
 	}
 	bytes, err := os.ReadFile(path)
 	if err != nil {
 		fmt.Println("Error while reading icon file:", err, path)
-		return b
+		return
 	}
 
 	b.IconBase64 = base64.StdEncoding.EncodeToString(bytes)
-
-	return b
 }
 
 func NewGetButtons() Buttons {
