@@ -47,6 +47,10 @@ func (s *State) GetButtonConfig(row, col int) *ButtonConfig {
 	return s.buttonConfigs[ButtonPos{row, col}]
 }
 
+func (s *State) GetButtonConfigs() map[ButtonPos]*ButtonConfig {
+	return s.buttonConfigs
+}
+
 func (s *State) GetCmd(row, col, state int) string {
 	switch state {
 	case BUTTON_PRESS:

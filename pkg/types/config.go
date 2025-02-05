@@ -33,6 +33,8 @@ type ButtonConfig struct {
 	ButtonRelease          string `toml:"button_release"`
 	ButtonLongPress        string `toml:"button_long_press"`
 	ButtonLongPressRelease string `toml:"button_long_press_release"`
+	Interval               int    `toml:"interval"`
+	Execute                string `toml:"execute"`
 }
 
 func ReadConfig() Config {

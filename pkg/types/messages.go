@@ -76,6 +76,9 @@ type Button struct {
 	LabelBase64 string `json:"LabelBase64"`
 	// "BackgroundColorHex": "#232323"
 	BackgroundColorHex string `json:"BackgroundColorHex"`
+
+	changed  bool   `json:"-"`
+	iconPath string `json:"-"`
 }
 
 type Buttons struct {
@@ -97,24 +100,44 @@ func NewButton(row, col int) Button {
 		IconBase64:         "",
 		LabelBase64:        "",
 		BackgroundColorHex: "#232323",
+
+		iconPath: "",
+		changed:  false,
 	}
 }
 
 func (b *Button) SetColor(color string) {
-	b.BackgroundColorHex = color
+	if b.BackgroundColorHex != color {
+		b.BackgroundColorHex = color
+		b.changed = true
+	}
 }
 
 func (b *Button) SetIconFromPath(path string) {
 	if path == "" {
 		return
 	}
-	bytes, err := os.ReadFile(path)
-	if err != nil {
-		fmt.Println("Error while reading icon file:", err, path)
-		return
-	}
 
-	b.IconBase64 = base64.StdEncoding.EncodeToString(bytes)
+	if b.iconPath != path {
+		bytes, err := os.ReadFile(path)
+		if err != nil {
+			fmt.Println("Error while reading icon file:", err, path)
+			return
+		}
+
+		b.iconPath = path
+		b.changed = true
+
+		b.IconBase64 = base64.StdEncoding.EncodeToString(bytes)
+	}
+}
+
+func (b *Button) ResetChanged() {
+	b.changed = false
+}
+
+func (b *Button) IsChanged() bool {
+	return b.changed
 }
 
 func NewGetButtons() Buttons {

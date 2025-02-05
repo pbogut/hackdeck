@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/pbogut/hackdeck/pkg/types"
@@ -52,10 +53,7 @@ func handleGetButtons() types.Buttons {
 	return buttons
 }
 
-func execAction(conn *websocket.Conn, row, col, status int) {
-	command := state.GetCmd(row, col, status)
-	// cfg := state.GetButtonConfig(row, col)
-
+func execCommand(conn *websocket.Conn, row, col int, command string) {
 	if command != "" {
 		args := config.ShellArguments
 		args = append(args, command)
@@ -76,22 +74,21 @@ func execAction(conn *websocket.Conn, row, col, status int) {
 		for scanner.Scan() {
 			m := scanner.Text()
 
-			change := false
+			fmt.Println("Recievied response from command:", m)
+
 			update := types.NewUpdateButton()
 			btn := state.GetButton(row, col)
 
 			if strings.HasPrefix(m, "!COLOR!") {
-				change = true
 				btn.SetColor(strings.TrimPrefix(m, "!COLOR!"))
 			}
 			if strings.HasPrefix(m, "!ICON!") {
-				change = true
 				btn.SetIconFromPath(strings.TrimPrefix(m, "!ICON!"))
 			}
 
-			if change {
+			if btn.IsChanged() {
+				btn.ResetChanged()
 				update.AddButton(*btn)
-				fmt.Println("Recievied response from command:", m)
 				response, err := json.Marshal(update)
 				if err != nil {
 					break
@@ -101,6 +98,10 @@ func execAction(conn *websocket.Conn, row, col, status int) {
 		}
 		cmd.Wait()
 	}
+}
+func execAction(conn *websocket.Conn, row, col, status int) {
+	command := state.GetCmd(row, col, status)
+	execCommand(conn, row, col, command)
 }
 
 func handleButtonPress(conn *websocket.Conn, row, col int) {
@@ -129,6 +130,26 @@ func msgToRowCol(msg []byte) (int, int) {
 	return action.GetXY()
 }
 
+func startExecute(conn *websocket.Conn) {
+	fmt.Println("Start Execute", state.GetButtonConfigs())
+	for _, btnCfg := range state.GetButtonConfigs() {
+		fmt.Println("Execute:", btnCfg.Execute)
+		if btnCfg.Execute != "" {
+			if btnCfg.Interval > 0 {
+				go handleCommandInterval(conn, btnCfg.Row, btnCfg.Column, btnCfg.Execute)
+			} else {
+				go execCommand(conn, btnCfg.Row, btnCfg.Column, btnCfg.Execute)
+			}
+		}
+	}
+}
+
+func handleCommandInterval(conn *websocket.Conn, row, col int, command string) {
+	for range time.Tick(time.Second * 1) {
+		execCommand(conn, row, col, command)
+	}
+}
+
 // WebSocket handler
 func WsHandler(w http.ResponseWriter, r *http.Request) {
 	config = types.ReadConfig()
@@ -143,6 +164,9 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 	fmt.Println("Client connected")
 	// Echo messages back to the client
+
+	startExecute(conn)
+
 	for {
 		// Read message from the client
 		messageType, msg, err := conn.ReadMessage()
