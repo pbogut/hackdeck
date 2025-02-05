@@ -85,6 +85,9 @@ func execCommand(conn *websocket.Conn, row, col int, command string) {
 			if strings.HasPrefix(m, "!ICON!") {
 				btn.SetIconFromPath(strings.TrimPrefix(m, "!ICON!"))
 			}
+			if strings.HasPrefix(m, "!LABEL!") {
+				btn.SetLabel(strings.TrimPrefix(m, "!LABEL!"))
+			}
 
 			if btn.IsChanged() {
 				btn.ResetChanged()

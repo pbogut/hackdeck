@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/pbogut/hackdeck/pkg/label"
 	"os"
 	"strconv"
 	"strings"
@@ -79,6 +80,7 @@ type Button struct {
 
 	changed  bool   `json:"-"`
 	iconPath string `json:"-"`
+	label    string `json:"-"`
 }
 
 type Buttons struct {
@@ -102,6 +104,7 @@ func NewButton(row, col int) Button {
 		BackgroundColorHex: "#232323",
 
 		iconPath: "",
+		label:    "",
 		changed:  false,
 	}
 }
@@ -114,22 +117,29 @@ func (b *Button) SetColor(color string) {
 }
 
 func (b *Button) SetIconFromPath(path string) {
-	if path == "" {
+	if b.iconPath == path {
 		return
 	}
 
-	if b.iconPath != path {
-		bytes, err := os.ReadFile(path)
-		if err != nil {
-			fmt.Println("Error while reading icon file:", err, path)
-			return
-		}
-
-		b.iconPath = path
-		b.changed = true
-
-		b.IconBase64 = base64.StdEncoding.EncodeToString(bytes)
+	bytes, err := os.ReadFile(path)
+	if err != nil {
+		fmt.Println("Error while reading icon file:", err, path)
+		return
 	}
+
+	b.changed = true
+	b.iconPath = path
+	b.IconBase64 = base64.StdEncoding.EncodeToString(bytes)
+}
+
+func (b *Button) SetLabel(text string) {
+	if b.label == text {
+		return
+	}
+
+	b.changed = true
+	b.label = text
+	b.LabelBase64 = label.GenerateLabel(text)
 }
 
 func (b *Button) ResetChanged() {

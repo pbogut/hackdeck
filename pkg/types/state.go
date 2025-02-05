@@ -26,6 +26,7 @@ func (s *State) Init(config Config) {
 		button := NewButton(btnCfg.Row, btnCfg.Column)
 		button.SetColor(btnCfg.Color)
 		button.SetIconFromPath(btnCfg.Icon)
+		button.SetLabel(btnCfg.Label)
 		s.AddButton(&button, &btnCfg)
 	}
 }
