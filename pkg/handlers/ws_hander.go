@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os/exec"
+	"strings"
 
 	"github.com/gorilla/websocket"
 	"github.com/pbogut/hackdeck/pkg/types"
@@ -50,53 +52,87 @@ func handleGetButtons() types.Buttons {
 		button.SetColor(btnCfg.Color)
 		button.SetIconFromPath(btnCfg.Icon)
 		buttons.AddButton(button)
-		state.AddButton(button, btnCfg)
+		state.AddButton(&button, &btnCfg)
 	}
 
 	return buttons
 }
 
-func execAction(action string) {
-	if action != "" {
-		args := config.ShellArguments
-		args = append(args, action)
+func execAction(conn *websocket.Conn, row, col, status int) {
+	command := state.GetCmd(row, col, status)
+	// cfg := state.GetButtonConfig(row, col)
 
-		fmt.Println("Execute command:", action)
+	if command != "" {
+		args := config.ShellArguments
+		args = append(args, command)
+
+		fmt.Println("Execute command:", command)
 		fmt.Println("Execute:", config.ShellCommand, args)
 
 		cmd := exec.Command(config.ShellCommand, args...)
-		cmd.Run()
+
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			fmt.Println("Error while getting stdout pipe:", err)
+		}
+
+		cmd.Start()
+
+		scanner := bufio.NewScanner(stdout)
+		for scanner.Scan() {
+			m := scanner.Text()
+
+			change := false
+			update := types.NewUpdateButton()
+			btn := state.GetButton(row, col)
+
+			if strings.HasPrefix(m, "!COLOR!") {
+				change = true
+				btn.SetColor(strings.TrimPrefix(m, "!COLOR!"))
+			}
+			if strings.HasPrefix(m, "!ICON!") {
+				change = true
+				btn.SetIconFromPath(strings.TrimPrefix(m, "!ICON!"))
+			}
+
+			if change {
+				update.AddButton(*btn)
+				fmt.Println("Recievied response from command:", m)
+				response, err := json.Marshal(update)
+				if err != nil {
+					break
+				}
+				conn.WriteMessage(websocket.TextMessage, response)
+			}
+		}
+		cmd.Wait()
 	}
 }
 
-func handleButtonPress(row, col int) types.Buttons {
+func handleButtonPress(conn *websocket.Conn, row, col int) types.Buttons {
 	fmt.Printf("Button pressed at row: %d, col: %d\n", row, col)
-	command := state.GetCmd(row, col, types.BUTTON_PRESS)
-	go execAction(command)
+	go execAction(conn, row, col, types.BUTTON_PRESS)
 
 	return types.NewUpdateButton()
 }
 
-func handleButtonLongPress(row, col int) types.Buttons {
+func handleButtonLongPress(conn *websocket.Conn, row, col int) types.Buttons {
 	fmt.Printf("Button long pressed at row: %d, col: %d\n", row, col)
-	command := state.GetCmd(row, col, types.BUTTON_LONG_PRESS)
-	go execAction(command)
+	go execAction(conn, row, col, types.BUTTON_LONG_PRESS)
 
 	return types.NewUpdateButton()
 }
 
-func handleButtonRelease(row, col int) types.Buttons {
+func handleButtonRelease(conn *websocket.Conn, row, col int) types.Buttons {
 	fmt.Printf("Button released at row: %d, col: %d\n", row, col)
-	command := state.GetCmd(row, col, types.BUTTON_RELEASE)
-	go execAction(command)
+	go execAction(conn, row, col, types.BUTTON_RELEASE)
 
 	return types.NewUpdateButton()
 }
 
-func handleButtonLongPressRelease(row, col int) types.Buttons {
+func handleButtonLongPressRelease(conn *websocket.Conn, row, col int) types.Buttons {
 	fmt.Printf("Button long press released at row: %d, col: %d\n", row, col)
-	command := state.GetCmd(row, col, types.BUTTON_LONG_PRESS_RELEASE)
-	go execAction(command)
+	go execAction(conn, row, col, types.BUTTON_LONG_PRESS_RELEASE)
 
 	return types.NewUpdateButton()
 }
@@ -135,16 +171,16 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 		switch method.Method {
 		case "BUTTON_LONG_PRESS":
 			row, col := msgToRowCol(msg)
-			result = handleButtonLongPress(row, col)
+			result = handleButtonLongPress(conn, row, col)
 		case "BUTTON_LONG_PRESS_RELEASE":
 			row, col := msgToRowCol(msg)
-			result = handleButtonLongPressRelease(row, col)
+			result = handleButtonLongPressRelease(conn, row, col)
 		case "BUTTON_PRESS":
 			row, col := msgToRowCol(msg)
-			result = handleButtonPress(row, col)
+			result = handleButtonPress(conn, row, col)
 		case "BUTTON_RELEASE":
 			orw, col := msgToRowCol(msg)
-			result = handleButtonRelease(orw, col)
+			result = handleButtonRelease(conn, orw, col)
 		case "GET_BUTTONS":
 			result = handleGetButtons()
 		case "CONNECTED":
