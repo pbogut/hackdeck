@@ -17,10 +17,17 @@ type State struct {
 	buttonConfigs map[ButtonPos]*ButtonConfig
 }
 
-func (s *State) Init(rows, cols int) {
-	buttonsCount := rows * cols
+func (s *State) Init(config Config) {
+	buttonsCount := config.Rows * config.Columns
 	s.buttons = make(map[ButtonPos]*Button, buttonsCount)
 	s.buttonConfigs = make(map[ButtonPos]*ButtonConfig, buttonsCount)
+
+	for _, btnCfg := range config.Buttons {
+		button := NewButton(btnCfg.Row, btnCfg.Column)
+		button.SetColor(btnCfg.Color)
+		button.SetIconFromPath(btnCfg.Icon)
+		s.AddButton(&button, &btnCfg)
+	}
 }
 
 func (s *State) AddButton(btn *Button, cfg *ButtonConfig) {
@@ -30,6 +37,10 @@ func (s *State) AddButton(btn *Button, cfg *ButtonConfig) {
 
 func (s *State) GetButton(row, col int) *Button {
 	return s.buttons[ButtonPos{row, col}]
+}
+
+func (s *State) GetButtons() map[ButtonPos]*Button {
+	return s.buttons
 }
 
 func (s *State) GetButtonConfig(row, col int) *ButtonConfig {

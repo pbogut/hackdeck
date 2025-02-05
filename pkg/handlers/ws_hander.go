@@ -45,14 +45,8 @@ func handleConnected(msg []byte) types.GetConfig {
 func handleGetButtons() types.Buttons {
 	buttons := types.NewGetButtons()
 
-	state.Init(config.Rows, config.Columns)
-
-	for _, btnCfg := range config.Buttons {
-		button := types.NewButton(btnCfg.Row, btnCfg.Column)
-		button.SetColor(btnCfg.Color)
-		button.SetIconFromPath(btnCfg.Icon)
-		buttons.AddButton(button)
-		state.AddButton(&button, &btnCfg)
+	for _, btn := range state.GetButtons() {
+		buttons.AddButton(*btn)
 	}
 
 	return buttons
@@ -138,6 +132,7 @@ func msgToRowCol(msg []byte) (int, int) {
 // WebSocket handler
 func WsHandler(w http.ResponseWriter, r *http.Request) {
 	config = types.ReadConfig()
+	state.Init(config)
 
 	// Upgrade the HTTP connection to a WebSocket connection
 	conn, err := upgrader.Upgrade(w, r, nil)
