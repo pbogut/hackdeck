@@ -8,6 +8,8 @@ import (
 )
 
 func main() {
+	handlers.Init()
+
 	http.HandleFunc("/", handlers.WsHandler)
 	http.HandleFunc("/ping", handlers.PingHandler)
 	// Start the HTTP server on port 8191
