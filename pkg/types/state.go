@@ -25,7 +25,8 @@ func (s *State) Init(config Config) {
 	for _, btnCfg := range config.Buttons {
 		button := NewButton(btnCfg.Row, btnCfg.Column)
 		button.SetColor(btnCfg.Color)
-		button.SetIconFromPath(btnCfg.Icon)
+		button.SetIconFromPath(btnCfg.IconPath)
+		button.SetIconFromText(btnCfg.IconText)
 		button.SetLabel(btnCfg.Label)
 		s.AddButton(&button, &btnCfg)
 	}

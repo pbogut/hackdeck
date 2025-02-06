@@ -43,8 +43,14 @@ func execCommand(row, col int, command string) {
 			if strings.HasPrefix(m, "!COLOR!") {
 				btn.SetColor(strings.TrimPrefix(m, "!COLOR!"))
 			}
-			if strings.HasPrefix(m, "!ICON!") {
-				btn.SetIconFromPath(strings.TrimPrefix(m, "!ICON!"))
+			if strings.HasPrefix(m, "!ICON_PATH!") {
+				btn.SetIconFromPath(strings.TrimPrefix(m, "!ICON_PATH!"))
+			}
+			if strings.HasPrefix(m, "!ICON_TEXT!") {
+				btn.SetIconFromText(strings.TrimPrefix(m, "!ICON_TEXT!"))
+			}
+			if strings.HasPrefix(m, "!ICON_COLOR!") {
+				btn.SetIconColor(strings.TrimPrefix(m, "!ICON_COLOR!"))
 			}
 			if strings.HasPrefix(m, "!LABEL!") {
 				btn.SetLabel(strings.TrimPrefix(m, "!LABEL!"))

@@ -28,7 +28,9 @@ type ButtonConfig struct {
 	Row                    int
 	Column                 int
 	Color                  string
-	Icon                   string
+	IconPath               string `toml:"icon_path"`
+	IconText               string `toml:"icon_text"`
+	IconColor              string `toml:"icon_color"`
 	ButtonPress            string `toml:"button_press"`
 	ButtonRelease          string `toml:"button_release"`
 	ButtonLongPress        string `toml:"button_long_press"`

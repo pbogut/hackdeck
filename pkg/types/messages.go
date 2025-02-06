@@ -78,9 +78,11 @@ type Button struct {
 	// "BackgroundColorHex": "#232323"
 	BackgroundColorHex string `json:"BackgroundColorHex"`
 
-	changed  bool   `json:"-"`
-	iconPath string `json:"-"`
-	label    string `json:"-"`
+	changed   bool   `json:"-"`
+	iconPath  string `json:"-"`
+	iconText  string `json:"-"`
+	iconColor string `json:"-"`
+	label     string `json:"-"`
 }
 
 type Buttons struct {
@@ -129,7 +131,33 @@ func (b *Button) SetIconFromPath(path string) {
 
 	b.changed = true
 	b.iconPath = path
+	b.iconText = ""
 	b.IconBase64 = base64.StdEncoding.EncodeToString(bytes)
+}
+
+func (b *Button) SetIconFromText(text string) {
+	if b.iconText == text {
+		return
+	}
+
+	b.changed = true
+	b.iconText = text
+	b.iconPath = ""
+	b.IconBase64 = label.GenerateIcon(text, b.iconColor)
+}
+
+func (b *Button) SetIconColor(color string) {
+	if b.iconColor == color {
+		return
+	}
+	b.iconColor = color
+
+	if b.iconText == "" {
+		return
+	}
+
+	b.changed = true
+	b.IconBase64 = label.GenerateIcon(b.iconText, color)
 }
 
 func (b *Button) SetLabel(text string) {
