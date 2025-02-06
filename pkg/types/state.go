@@ -27,6 +27,7 @@ func (s *State) Init(config Config) {
 		button.SetColor(btnCfg.Color)
 		button.SetIconFromPath(btnCfg.IconPath)
 		button.SetIconFromText(btnCfg.IconText)
+		button.SetIconColor(btnCfg.IconColor)
 		button.SetLabel(btnCfg.Label)
 		s.AddButton(&button, &btnCfg)
 	}
