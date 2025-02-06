@@ -4,10 +4,9 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
+	"github.com/kirsle/configdir"
 	"github.com/pbogut/hackdeck/pkg/logger"
 )
-
-var configFile = "hackdeck.toml"
 
 type Config struct {
 	Rows                          int
@@ -58,11 +57,22 @@ func ReadConfig() Config {
 		Buttons: []ButtonConfig{},
 	}
 
+	configFile := configdir.LocalConfig("hackdeck", "hackdeck.toml")
+	logger.Debugf("Looking for config file: %s", configFile)
 	_, err := os.Stat(configFile)
 	if err != nil {
 		logger.Debugf("Config not found: %s", configFile)
+		configFile = "hackdeck.toml"
+		logger.Debugf("Looking for config file: %s", configFile)
+	}
+
+	_, err = os.Stat(configFile)
+	if err != nil {
+		logger.Debug("Config not found: ", configFile)
 		return config
 	}
+
+	logger.Debugf("Config file found: %s", configFile)
 
 	if _, err := toml.DecodeFile(configFile, &config); err != nil {
 		logger.Error("Error while decoding config file:", err)
