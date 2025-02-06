@@ -3,12 +3,12 @@ package handlers
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"os/exec"
 	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/pbogut/hackdeck/pkg/logger"
 	"github.com/pbogut/hackdeck/pkg/types"
 )
 
@@ -19,14 +19,13 @@ func execCommand(row, col int, command string) {
 		args := config.ShellArguments
 		args = append(args, command)
 
-		fmt.Println("Execute command:", command)
-		fmt.Println("Execute:", config.ShellCommand, args)
-
 		cmd := exec.Command(config.ShellCommand, args...)
+
+		logger.Debugf("Execute command (row: %d, col: %d, cmd: %s)", row, col, cmd)
 
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
-			fmt.Println("Error while getting stdout pipe:", err)
+			logger.Error("Error while getting stdout pipe:", err)
 		}
 
 		cmd.Start()
@@ -35,7 +34,8 @@ func execCommand(row, col int, command string) {
 		for scanner.Scan() {
 			m := scanner.Text()
 
-			fmt.Println("Recievied response from command:", m)
+			logger.Debugf("Recievied response (row: %d, col: %d, cmd: %s)", row, col, cmd)
+			logger.Debugf("Response: %s", m)
 
 			update := types.NewUpdateButton()
 			btn := state.GetButton(row, col)
@@ -77,13 +77,14 @@ func handleCommandInterval(row, col int, command string) {
 }
 
 func startExecute() {
-	fmt.Println("Start Execute", state.GetButtonConfigs())
+	logger.Debug("Start Execute commands")
 	for _, btnCfg := range state.GetButtonConfigs() {
-		fmt.Println("Execute:", btnCfg.Execute)
 		if btnCfg.Execute != "" {
 			if btnCfg.Interval > 0 {
+				logger.Debugf("Interval (%d): %s", btnCfg.Interval, btnCfg.Execute)
 				go handleCommandInterval(btnCfg.Row, btnCfg.Column, btnCfg.Execute)
 			} else {
+				logger.Debugf("Execute: %s", btnCfg.Execute)
 				go execCommand(btnCfg.Row, btnCfg.Column, btnCfg.Execute)
 			}
 		}
@@ -93,11 +94,6 @@ func startExecute() {
 func execAction(row, col, status int) {
 	command := state.GetCmd(row, col, status)
 	execCommand(row, col, command)
-}
-
-func handleButtonPress(row, col int) {
-	fmt.Printf("Button pressed at row: %d, col: %d\n", row, col)
-	go execAction(row, col, types.BUTTON_PRESS)
 }
 
 func Init() {
@@ -124,8 +120,7 @@ func RegisterClient(client *websocket.Conn) {
 
 func Broadcast(msg []byte) {
 	for i, client := range clients {
-		fmt.Println("Broadcasting message to client:", i)
-
+		logger.Debugf("Broadcasting message to client: %d", i)
 		client.WriteMessage(websocket.TextMessage, msg)
 	}
 }

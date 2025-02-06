@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
@@ -14,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/golang/freetype/truetype"
+	"github.com/pbogut/hackdeck/pkg/logger"
 	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
 )
@@ -43,7 +43,7 @@ func generateImage(text string, size float64, margin int, fg *image.Uniform) str
 
 	f, err := truetype.Parse(fontBytes)
 	if err != nil {
-		fmt.Println(err)
+		logger.Errorf("Fant parsing error: %s", err)
 		return ""
 	}
 	// Draw the background
@@ -77,7 +77,6 @@ func generateImage(text string, size float64, margin int, fg *image.Uniform) str
 	dy := int(math.Ceil(size * lineheight))
 	x := margin
 	y := height - margin - ((len(lines) - 1) * dy)
-	fmt.Println("len(lines)", len(lines), lines)
 
 	for _, line := range lines {
 		// @todo figure better way for outline
@@ -97,7 +96,7 @@ func generateImage(text string, size float64, margin int, fg *image.Uniform) str
 
 	buffer := new(bytes.Buffer)
 	if err := png.Encode(buffer, rgba); err != nil {
-		fmt.Println("unable to encode image.")
+		logger.Error("Unable to encode image.")
 	}
 
 	result := base64.StdEncoding.EncodeToString(buffer.Bytes())
@@ -114,6 +113,7 @@ func parseHexColor(s string) (c color.RGBA, err error) {
 	}
 
 	if s[0] != '#' {
+		logger.Errorf("Color must start with #: %s", s)
 		return c, errInvalidFormat
 	}
 
@@ -141,6 +141,7 @@ func parseHexColor(s string) (c color.RGBA, err error) {
 		c.B = hexToByte(s[3]) * 17
 	default:
 		err = errInvalidFormat
+		logger.Errorf("Color format is invalid: %s", s)
 		return c, err
 	}
 	return c, nil

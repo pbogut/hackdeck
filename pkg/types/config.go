@@ -1,10 +1,10 @@
 package types
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/BurntSushi/toml"
+	"github.com/pbogut/hackdeck/pkg/logger"
 )
 
 var configFile = "hackdeck.toml"
@@ -60,12 +60,12 @@ func ReadConfig() Config {
 
 	_, err := os.Stat(configFile)
 	if err != nil {
-		fmt.Println("Config file is missing: ", configFile)
+		logger.Debugf("Config not found: %s", configFile)
 		return config
 	}
 
 	if _, err := toml.DecodeFile(configFile, &config); err != nil {
-		fmt.Println("Error while decoding config file:", err)
+		logger.Error("Error while decoding config file:", err)
 		return config
 	}
 

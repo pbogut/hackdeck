@@ -2,10 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/websocket"
+	"github.com/pbogut/hackdeck/pkg/logger"
 	"github.com/pbogut/hackdeck/pkg/types"
 )
 
@@ -19,10 +19,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func handleConnected(msg []byte) types.GetConfig {
-	var connected types.Connected
-	json.Unmarshal(msg, &connected)
-
+func handleConnected() types.GetConfig {
 	get_config := types.GetConfig{
 		Method:                        "GET_CONFIG",
 		Rows:                          config.Rows,
@@ -49,18 +46,23 @@ func handleGetButtons() types.Buttons {
 	return buttons
 }
 
+func handleButtonPress(row, col int) {
+	logger.Debugf("Button pressed (row: %d, col: %d)", row, col)
+	go execAction(row, col, types.BUTTON_PRESS)
+}
+
 func handleButtonLongPress(row, col int) {
-	fmt.Printf("Button long pressed at row: %d, col: %d\n", row, col)
+	logger.Debugf("Button long pressed (row: %d, col: %d)", row, col)
 	go execAction(row, col, types.BUTTON_LONG_PRESS)
 }
 
 func handleButtonRelease(row, col int) {
-	fmt.Printf("Button released at row: %d, col: %d\n", row, col)
+	logger.Debugf("Button released (row: %d, col: %d)", row, col)
 	go execAction(row, col, types.BUTTON_RELEASE)
 }
 
 func handleButtonLongPressRelease(row, col int) {
-	fmt.Printf("Button long press released at row: %d, col: %d\n", row, col)
+	logger.Debugf("Button long press released (row: %d, col: %d)", row, col)
 	go execAction(row, col, types.BUTTON_LONG_PRESS_RELEASE)
 }
 
@@ -75,11 +77,11 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 	// Upgrade the HTTP connection to a WebSocket connection
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		fmt.Println("Error while upgrading connection:", err)
+		logger.Error("Error while upgrading connection:", err)
 		return
 	}
 	defer conn.Close()
-	fmt.Println("Client connected")
+	logger.Info("New client connected")
 	// Echo messages back to the client
 
 	RegisterClient(conn)
@@ -88,7 +90,7 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 		// Read message from the client
 		messageType, msg, err := conn.ReadMessage()
 		if err != nil {
-			fmt.Println("Error while reading message:", err)
+			logger.Error("Error while reading message:", err)
 			break
 		}
 
@@ -112,7 +114,7 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 		case "GET_BUTTONS":
 			result = handleGetButtons()
 		case "CONNECTED":
-			result = handleConnected(msg)
+			result = handleConnected()
 		}
 
 		if result != nil {
@@ -124,6 +126,6 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Print the received message
-		fmt.Printf("Received: %s\n", msg)
+		logger.Debugf("Message Received: %s", msg)
 	}
 }

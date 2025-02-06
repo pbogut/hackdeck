@@ -2,11 +2,12 @@ package types
 
 import (
 	"encoding/base64"
-	"fmt"
-	"github.com/pbogut/hackdeck/pkg/label"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/pbogut/hackdeck/pkg/label"
+	"github.com/pbogut/hackdeck/pkg/logger"
 )
 
 type Method struct {
@@ -125,7 +126,7 @@ func (b *Button) SetIconFromPath(path string) {
 
 	bytes, err := os.ReadFile(path)
 	if err != nil {
-		fmt.Println("Error while reading icon file:", err, path)
+		logger.Error("Error while reading icon file:", err, path)
 		return
 	}
 
