@@ -19,8 +19,8 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func handleConnected() types.GetConfig {
-	get_config := types.GetConfig{
+func getConfigResponse() []byte {
+	getConfig := types.GetConfig{
 		Method:                        "GET_CONFIG",
 		Rows:                          config.Rows,
 		Columns:                       config.Columns,
@@ -33,17 +33,27 @@ func handleConnected() types.GetConfig {
 		SupportButtonReleaseLongPress: config.SupportButtonReleaseLongPress,
 	}
 
-	return get_config
+	response, err := json.Marshal(getConfig)
+	if err != nil {
+		logger.Fatalf("Error while marshaling buttons: %s", err)
+	}
+
+	return response
 }
 
-func handleGetButtons() types.Buttons {
+func getButtonsResponse() []byte {
 	buttons := types.NewGetButtons()
 
 	for _, btn := range state.GetButtons() {
 		buttons.AddButton(*btn)
 	}
 
-	return buttons
+	response, err := json.Marshal(buttons)
+	if err != nil {
+		logger.Fatalf("Error while marshaling buttons: %s", err)
+	}
+
+	return response
 }
 
 func handleButtonPress(row, col int) {
@@ -94,7 +104,6 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		var result interface{}
 		var method types.Method
 		json.Unmarshal(msg, &method)
 
@@ -112,17 +121,9 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 			row, col := msgToRowCol(msg)
 			handleButtonRelease(row, col)
 		case "GET_BUTTONS":
-			result = handleGetButtons()
+			conn.WriteMessage(messageType, getButtonsResponse())
 		case "CONNECTED":
-			result = handleConnected()
-		}
-
-		if result != nil {
-			response, err := json.Marshal(result)
-			if err != nil {
-				break
-			}
-			conn.WriteMessage(messageType, response)
+			conn.WriteMessage(messageType, getConfigResponse())
 		}
 
 		// Print the received message

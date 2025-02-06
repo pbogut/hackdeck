@@ -13,6 +13,7 @@ import (
 )
 
 var clients []*websocket.Conn
+var commands []*exec.Cmd
 
 func execCommand(row, col int, command string) {
 	if command != "" {
@@ -28,6 +29,7 @@ func execCommand(row, col int, command string) {
 			logger.Error("Error while getting stdout pipe:", err)
 		}
 
+		monitorCommand(cmd)
 		cmd.Start()
 
 		scanner := bufio.NewScanner(stdout)
@@ -67,6 +69,7 @@ func execCommand(row, col int, command string) {
 			}
 		}
 		cmd.Wait()
+		releaseCommand(cmd)
 	}
 }
 
@@ -96,12 +99,45 @@ func execAction(row, col, status int) {
 	execCommand(row, col, command)
 }
 
+func monitorCommand(cmd *exec.Cmd) {
+	logger.Debugf("Add command: %s", cmd)
+	commands = append(commands, cmd)
+}
+
+func releaseCommand(cmd *exec.Cmd) {
+	for i, c := range commands {
+		if c == cmd {
+			logger.Debugf("Remove command: %s", cmd)
+			commands[i] = commands[len(commands)-1]
+			commands = commands[:len(commands)-1]
+		}
+	}
+}
+
+func killMonitoredCommands() {
+	logger.Debugf("Kill all commands #%d", len(commands))
+	for _, cmd := range commands {
+		logger.Debugf("Kill command: %s", cmd)
+		cmd.Process.Kill()
+	}
+}
+
 func Init() {
 	config = types.ReadConfig()
 	state.Init(config)
 	clients = make([]*websocket.Conn, 0)
+	commands = make([]*exec.Cmd, 0)
 
 	startExecute()
+}
+
+func ReloadConfig() {
+	killMonitoredCommands()
+	config = types.ReadConfig()
+	state.Init(config)
+
+	Broadcast(getConfigResponse())
+	Broadcast(getButtonsResponse())
 }
 
 func RegisterClient(client *websocket.Conn) {
