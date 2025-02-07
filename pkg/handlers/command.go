@@ -55,7 +55,7 @@ func execCommand(row, col int, command string) {
 				btn.SetIconColor(strings.TrimPrefix(m, "!ICON_COLOR!"))
 			}
 			if strings.HasPrefix(m, "!LABEL!") {
-				btn.SetLabel(strings.TrimPrefix(m, "!LABEL!"))
+				btn.SetLabel(strings.ReplaceAll(strings.TrimPrefix(m, "!LABEL!"), "\\n", "\n"))
 			}
 
 			if btn.IsChanged() {
