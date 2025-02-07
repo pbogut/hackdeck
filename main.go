@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net/http"
 
 	"github.com/pbogut/hackdeck/pkg/handlers"
@@ -9,9 +10,12 @@ import (
 )
 
 func main() {
+	port := flag.Int("port", 8191, "Port to listen on")
+	host := flag.String("host", "", "host to listen on")
 	printDebug := flag.Bool("debug", false, "Print debug messages")
 	flag.Parse()
 
+	addr := fmt.Sprintf("%s:%d", *host, *port)
 	if *printDebug {
 		logger.Init(logger.DEBUG)
 	} else {
@@ -24,8 +28,8 @@ func main() {
 	http.HandleFunc("/ping", handlers.PingHandler)
 	http.HandleFunc("/reload", handlers.ReloadHandler)
 	// Start the HTTP server on port 8191
-	logger.Info("Starting server on :8191")
-	if err := http.ListenAndServe(":8191", nil); err != nil {
+	logger.Infof("Starting server on %s", addr)
+	if err := http.ListenAndServe(addr, nil); err != nil {
 		logger.Fatal("Error starting server:", err)
 	}
 }
