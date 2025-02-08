@@ -34,7 +34,18 @@ func (s *State) GetPipe(row, col int) *io.WriteCloser {
 	return s.pipes[ButtonPos{row, col}]
 }
 
+func def[K comparable](val, defVal K) K {
+	var empty K
+	if val == empty {
+		return defVal
+	}
+	return val
+}
+
 func (s *State) Init(config Config) {
+	defBtn := NewButton(-1, -1)
+	_, defLabelSize, defLabelColor := defBtn.GetLabel()
+	_, defIconColor := defBtn.GetIconText()
 	buttonsCount := config.Rows * config.Columns
 	s.buttons = make(map[ButtonPos]*Button, buttonsCount)
 	s.buttonConfigs = make(map[ButtonPos]*ButtonConfig, buttonsCount)
@@ -44,9 +55,11 @@ func (s *State) Init(config Config) {
 		button := NewButton(btnCfg.Row, btnCfg.Column)
 		button.SetColor(btnCfg.Color)
 		button.SetIconFromPath(btnCfg.IconPath)
-		button.SetIconFromText(btnCfg.IconText)
-		button.SetIconColor(btnCfg.IconColor)
-		button.SetLabel(btnCfg.Label)
+		button.SetIconFromText(btnCfg.IconText,
+			def(btnCfg.IconColor, defIconColor))
+		button.SetLabel(btnCfg.Label,
+			def(btnCfg.LabelSize, defLabelSize),
+			def(btnCfg.LabelColor, defLabelColor))
 		s.AddButton(&button, &btnCfg)
 	}
 }

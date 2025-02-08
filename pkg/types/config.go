@@ -27,16 +27,18 @@ type ButtonConfig struct {
 	Row                    int
 	Column                 int
 	Color                  string
-	IconPath               string `toml:"icon_path"`
-	IconText               string `toml:"icon_text"`
-	IconColor              string `toml:"icon_color"`
-	ButtonPress            string `toml:"button_press"`
-	ButtonRelease          string `toml:"button_release"`
-	ButtonLongPress        string `toml:"button_long_press"`
-	ButtonLongPressRelease string `toml:"button_long_press_release"`
-	Interval               int    `toml:"interval"`
-	Execute                string `toml:"execute"`
-	Label                  string `toml:"label"`
+	IconPath               string  `toml:"icon_path"`
+	IconText               string  `toml:"icon_text"`
+	IconColor              string  `toml:"icon_color"`
+	ButtonPress            string  `toml:"button_press"`
+	ButtonRelease          string  `toml:"button_release"`
+	ButtonLongPress        string  `toml:"button_long_press"`
+	ButtonLongPressRelease string  `toml:"button_long_press_release"`
+	Interval               int     `toml:"interval"`
+	Execute                string  `toml:"execute"`
+	Label                  string  `toml:"label"`
+	LabelSize              float64 `toml:"label_size"`
+	LabelColor             string  `toml:"label_color"`
 }
 
 func ReadConfig() Config {

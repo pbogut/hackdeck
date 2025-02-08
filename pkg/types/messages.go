@@ -79,12 +79,14 @@ type Button struct {
 	// "BackgroundColorHex": "#232323"
 	BackgroundColorHex string `json:"BackgroundColorHex"`
 
-	pid       int    `json:"-"`
-	changed   bool   `json:"-"`
-	iconPath  string `json:"-"`
-	iconText  string `json:"-"`
-	iconColor string `json:"-"`
-	label     string `json:"-"`
+	pid        int     `json:"-"`
+	changed    bool    `json:"-"`
+	iconPath   string  `json:"-"`
+	iconText   string  `json:"-"`
+	iconColor  string  `json:"-"`
+	label      string  `json:"-"`
+	labelSize  float64 `json:"-"`
+	labelColor string  `json:"-"`
 }
 
 type Buttons struct {
@@ -115,9 +117,13 @@ func NewButton(row, col int) Button {
 		LabelBase64:        "",
 		BackgroundColorHex: "#232323",
 
-		iconPath: "",
-		label:    "",
-		changed:  false,
+		iconPath:   "",
+		iconText:   "",
+		iconColor:  "#fff",
+		label:      "",
+		labelSize:  35,
+		labelColor: "#fff",
+		changed:    false,
 	}
 }
 
@@ -145,56 +151,67 @@ func (b *Button) SetIconFromPath(path string) {
 	b.IconBase64 = base64.StdEncoding.EncodeToString(bytes)
 }
 
-func (b *Button) SetIconFromText(text string) {
-	if b.iconText == text {
+func (b *Button) SetIconFromText(text, color string) {
+	if b.iconText == text && b.iconColor == color {
 		return
 	}
 
 	b.changed = true
 	b.iconText = text
-	b.iconPath = ""
-	b.IconBase64 = label.GenerateIcon(text, b.iconColor)
-}
-
-func (b *Button) SetIconColor(color string) {
-	if b.iconColor == color {
-		return
-	}
 	b.iconColor = color
-
-	if b.iconText == "" {
-		return
-	}
-
-	b.changed = true
-	b.IconBase64 = label.GenerateIcon(b.iconText, color)
+	b.iconPath = ""
+	b.IconBase64 = label.GenerateIcon(text, color)
 }
 
-func (b *Button) SetLabel(text string) {
-	if b.label == text {
+func (b *Button) GetIconText() (text string, color string) {
+	return b.iconText, b.iconColor
+}
+
+func (b *Button) GetLabel() (text string, size float64, color string) {
+	return b.label, b.labelSize, b.labelColor
+}
+
+func (b *Button) SetLabel(text string, size float64, color string) {
+	if b.label == text && b.labelSize == size && b.labelColor == color {
 		return
 	}
 
 	b.changed = true
 	b.label = text
-	b.LabelBase64 = label.GenerateLabel(text)
+	b.labelSize = size
+	b.labelColor = color
+	b.LabelBase64 = label.GenerateLabel(text, size, color)
 }
 
 func (b *Button) UpdateFromAnyMap(m map[string]any) {
-	if m["color"] != nil {
-		b.SetColor(m["color"].(string))
+	if v, ok := m["color"].(string); ok {
+		b.SetColor(v)
 	}
-	if m["icon_color"] != nil {
-		b.SetIconColor(m["icon_color"].(string))
+	if v, ok := m["icon_path"].(string); ok {
+		b.SetIconFromPath(v)
 	}
-	if m["icon_path"] != nil {
-		b.SetIconFromPath(m["icon_path"].(string))
+	if m["icon_text"] != nil || m["icon_color"] != nil {
+		text, color := b.GetIconText()
+		if v, ok := m["icon_text"].(string); ok {
+			text = v
+		}
+		if v, ok := m["icon_color"].(string); ok {
+			color = v
+		}
+		b.SetIconFromText(text, color)
 	}
-	if m["icon_text"] != nil {
-		b.SetIconFromText(m["icon_text"].(string))
-	}
-	if m["label"] != nil {
-		b.SetLabel(m["label"].(string))
+	if m["label"] != nil || m["label_size"] != nil || m["label_color"] != nil {
+		text, size, color := b.GetLabel()
+		if v, ok := m["label"].(string); ok {
+			text = v
+		}
+		if v, ok := m["label_size"].(float64); ok {
+			size = v
+		}
+		if v, ok := m["label_color"].(string); ok {
+			color = v
+		}
+		b.SetLabel(text, size, color)
 	}
 }
 

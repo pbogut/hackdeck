@@ -30,8 +30,13 @@ func GenerateIcon(icon string, hexColor string) string {
 	return generateImage(icon, 250.0, 30, img)
 }
 
-func GenerateLabel(text string) string {
-	return generateImage(text, 50.0, 10, image.White)
+func GenerateLabel(text string, size float64, hexColor string) string {
+	img := image.White
+	color, err := parseHexColor(hexColor)
+	if err == nil {
+		img = &image.Uniform{C: color}
+	}
+	return generateImage(text, size, 10, img)
 }
 
 func generateImage(text string, size float64, margin int, fg *image.Uniform) string {
