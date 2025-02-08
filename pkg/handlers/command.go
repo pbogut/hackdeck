@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 
@@ -12,11 +13,24 @@ import (
 	"github.com/pbogut/hackdeck/pkg/types"
 )
 
+type CommandType int
+
+const (
+	MAIN_COMMAND = iota
+	ACTION_COMMAND
+)
+
 var clients []*websocket.Conn
 var commands []*exec.Cmd
 
-func execCommand(row, col int, command string) {
+func execCommand(row, col int, command string, cmdType CommandType) {
 	if command != "" {
+		btn := state.GetButton(row, col)
+		pid := btn.GetPid()
+		if cmdType == MAIN_COMMAND && pid > 0 {
+			command = strings.ReplaceAll(command, "%pid%", strconv.Itoa(pid))
+		}
+
 		args := config.ShellArguments
 		args = append(args, command)
 
@@ -31,6 +45,10 @@ func execCommand(row, col int, command string) {
 
 		monitorCommand(cmd)
 		cmd.Start()
+
+		if cmdType == MAIN_COMMAND {
+			btn.SetPid(cmd.Process.Pid)
+		}
 
 		scanner := bufio.NewScanner(stdout)
 		for scanner.Scan() {
@@ -69,13 +87,16 @@ func execCommand(row, col int, command string) {
 			}
 		}
 		cmd.Wait()
+		if cmdType == MAIN_COMMAND {
+			btn.SetPid(0)
+		}
 		releaseCommand(cmd)
 	}
 }
 
 func handleCommandInterval(row, col int, command string) {
 	for range time.Tick(time.Second * 1) {
-		execCommand(row, col, command)
+		execCommand(row, col, command, MAIN_COMMAND)
 	}
 }
 
@@ -88,7 +109,7 @@ func startExecute() {
 				go handleCommandInterval(btnCfg.Row, btnCfg.Column, btnCfg.Execute)
 			} else {
 				logger.Debugf("Execute: %s", btnCfg.Execute)
-				go execCommand(btnCfg.Row, btnCfg.Column, btnCfg.Execute)
+				go execCommand(btnCfg.Row, btnCfg.Column, btnCfg.Execute, MAIN_COMMAND)
 			}
 		}
 	}
@@ -96,7 +117,7 @@ func startExecute() {
 
 func execAction(row, col, status int) {
 	command := state.GetCmd(row, col, status)
-	execCommand(row, col, command)
+	execCommand(row, col, command, ACTION_COMMAND)
 }
 
 func monitorCommand(cmd *exec.Cmd) {

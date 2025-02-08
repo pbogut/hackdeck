@@ -79,6 +79,7 @@ type Button struct {
 	// "BackgroundColorHex": "#232323"
 	BackgroundColorHex string `json:"BackgroundColorHex"`
 
+	pid       int    `json:"-"`
 	changed   bool   `json:"-"`
 	iconPath  string `json:"-"`
 	iconText  string `json:"-"`
@@ -91,6 +92,14 @@ type Buttons struct {
 	Method string `json:"Method"`
 	// "Buttons": []
 	Buttons []Button `json:"Buttons"`
+}
+
+func (b *Button) SetPid(pid int) {
+	b.pid = pid
+}
+
+func (b *Button) GetPid() int {
+	return b.pid
 }
 
 func (b *Buttons) AddButton(button Button) *Buttons {
