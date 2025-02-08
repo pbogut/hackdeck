@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -22,6 +23,26 @@ const (
 
 var clients []*websocket.Conn
 var commands []*exec.Cmd
+
+var clientsMutex = &sync.Mutex{}
+var commandsMutex = &sync.Mutex{}
+
+func sendStdin(row, col int, command string) {
+	btn := state.GetButton(row, col)
+	pid := btn.GetPid()
+	for _, cmd := range commands {
+		if cmd != nil && cmd.Process.Pid == pid {
+			logger.Debugf("Send stdin to command (row: %d, col: %d, cmd: %s) %s", row, col, cmd, command)
+			pipe := state.GetPipe(row, col)
+			if pipe == nil {
+				logger.Errorf("Process not found (row: %d, col: %d, cmd: %s)", row, col, cmd)
+			} else {
+				(*pipe).Write([]byte(command))
+			}
+			break
+		}
+	}
+}
 
 func execCommand(row, col int, command string, cmdType CommandType) {
 	if command != "" {
@@ -41,6 +62,13 @@ func execCommand(row, col int, command string, cmdType CommandType) {
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
 			logger.Error("Error while getting stdout pipe:", err)
+		}
+		if cmdType == MAIN_COMMAND {
+			stdin, err := cmd.StdinPipe()
+			if err != nil {
+				logger.Error("Error while getting stdin pipe:", err)
+			}
+			state.AddPipe(row, col, &stdin)
 		}
 
 		monitorCommand(cmd)
@@ -118,15 +146,23 @@ func startExecute() {
 
 func execAction(row, col, status int) {
 	command := state.GetCmd(row, col, status)
-	execCommand(row, col, command, ACTION_COMMAND)
+	command, pipe := strings.CutPrefix(command, "<|")
+	if pipe {
+		sendStdin(row, col, command)
+	} else {
+		execCommand(row, col, command, ACTION_COMMAND)
+	}
 }
 
 func monitorCommand(cmd *exec.Cmd) {
 	logger.Debugf("Add command: %s", cmd)
+	commandsMutex.Lock()
 	commands = append(commands, cmd)
+	commandsMutex.Unlock()
 }
 
 func releaseCommand(cmd *exec.Cmd) {
+	commandsMutex.Lock()
 	for i, c := range commands {
 		if c == cmd {
 			logger.Debugf("Remove command: %s", cmd)
@@ -134,6 +170,7 @@ func releaseCommand(cmd *exec.Cmd) {
 			commands = commands[:len(commands)-1]
 		}
 	}
+	commandsMutex.Unlock()
 }
 
 func killMonitoredCommands() {
@@ -147,8 +184,9 @@ func killMonitoredCommands() {
 func Init() {
 	config = types.ReadConfig()
 	state.Init(config)
+	commandsSize := config.Rows * config.Columns
 	clients = make([]*websocket.Conn, 0)
-	commands = make([]*exec.Cmd, 0)
+	commands = make([]*exec.Cmd, commandsSize*2)
 
 	startExecute()
 }
@@ -164,16 +202,20 @@ func ReloadConfig() {
 
 func RegisterClient(client *websocket.Conn) {
 	client.SetCloseHandler(func(code int, text string) error {
+		clientsMutex.Lock()
 		for i, c := range clients {
 			if c == client {
 				clients[i] = clients[len(clients)-1]
 				clients = clients[:len(clients)-1]
 			}
 		}
+		clientsMutex.Unlock()
 		return nil
 	})
 
+	clientsMutex.Lock()
 	clients = append(clients, client)
+	clientsMutex.Unlock()
 }
 
 func Broadcast(msg []byte) {
