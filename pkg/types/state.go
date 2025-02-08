@@ -1,5 +1,9 @@
 package types
 
+import (
+	"sync"
+)
+
 const (
 	BUTTON_PRESS = iota
 	BUTTON_RELEASE
@@ -13,6 +17,7 @@ type ButtonPos struct {
 }
 
 type State struct {
+	mutex         sync.Mutex
 	buttons       map[ButtonPos]*Button
 	buttonConfigs map[ButtonPos]*ButtonConfig
 }
@@ -34,8 +39,10 @@ func (s *State) Init(config Config) {
 }
 
 func (s *State) AddButton(btn *Button, cfg *ButtonConfig) {
+	s.mutex.Lock()
 	s.buttons[ButtonPos{btn.PositionY, btn.PositionX}] = btn
 	s.buttonConfigs[ButtonPos{btn.PositionY, btn.PositionX}] = cfg
+	s.mutex.Unlock()
 }
 
 func (s *State) GetButton(row, col int) *Button {
