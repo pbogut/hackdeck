@@ -88,30 +88,20 @@ func execCommand(row, col int, command string, cmdType CommandType) {
 			update := types.NewUpdateButton()
 			btn := state.GetButton(row, col)
 
-			if strings.HasPrefix(m, "!COLOR!") {
-				btn.SetColor(strings.TrimPrefix(m, "!COLOR!"))
-			}
-			if strings.HasPrefix(m, "!ICON_PATH!") {
-				btn.SetIconFromPath(strings.TrimPrefix(m, "!ICON_PATH!"))
-			}
-			if strings.HasPrefix(m, "!ICON_TEXT!") {
-				btn.SetIconFromText(strings.TrimPrefix(m, "!ICON_TEXT!"))
-			}
-			if strings.HasPrefix(m, "!ICON_COLOR!") {
-				btn.SetIconColor(strings.TrimPrefix(m, "!ICON_COLOR!"))
-			}
-			if strings.HasPrefix(m, "!LABEL!") {
-				btn.SetLabel(strings.ReplaceAll(strings.TrimPrefix(m, "!LABEL!"), "\\n", "\n"))
-			}
+			var result map[string]any
+			err := json.Unmarshal([]byte(m), &result)
+			if err == nil {
+				btn.UpdateFromAnyMap(result)
 
-			if btn.IsChanged() {
-				btn.ResetChanged()
-				update.AddButton(*btn)
-				response, err := json.Marshal(update)
-				if err != nil {
-					break
+				if btn.IsChanged() {
+					btn.ResetChanged()
+					update.AddButton(*btn)
+					response, err := json.Marshal(update)
+					if err != nil {
+						break
+					}
+					Broadcast(response)
 				}
-				Broadcast(response)
 			}
 		}
 		cmd.Wait()

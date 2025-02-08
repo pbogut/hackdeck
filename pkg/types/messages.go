@@ -180,6 +180,24 @@ func (b *Button) SetLabel(text string) {
 	b.LabelBase64 = label.GenerateLabel(text)
 }
 
+func (b *Button) UpdateFromAnyMap(m map[string]any) {
+	if m["color"] != nil {
+		b.SetColor(m["color"].(string))
+	}
+	if m["icon_color"] != nil {
+		b.SetIconColor(m["icon_color"].(string))
+	}
+	if m["icon_path"] != nil {
+		b.SetIconFromPath(m["icon_path"].(string))
+	}
+	if m["icon_text"] != nil {
+		b.SetIconFromText(m["icon_text"].(string))
+	}
+	if m["label"] != nil {
+		b.SetLabel(m["label"].(string))
+	}
+}
+
 func (b *Button) ResetChanged() {
 	b.changed = false
 }
