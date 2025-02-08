@@ -94,8 +94,9 @@ func execCommand(row, col int, command string, cmdType CommandType) {
 	}
 }
 
-func handleCommandInterval(row, col int, command string) {
-	for range time.Tick(time.Second * 1) {
+func handleCommandInterval(row, col int, command string, interval int) {
+	ticker := time.NewTicker(time.Second * time.Duration(interval))
+	for ; true; <-ticker.C {
 		execCommand(row, col, command, MAIN_COMMAND)
 	}
 }
@@ -106,7 +107,7 @@ func startExecute() {
 		if btnCfg.Execute != "" {
 			if btnCfg.Interval > 0 {
 				logger.Debugf("Interval (%d): %s", btnCfg.Interval, btnCfg.Execute)
-				go handleCommandInterval(btnCfg.Row, btnCfg.Column, btnCfg.Execute)
+				go handleCommandInterval(btnCfg.Row, btnCfg.Column, btnCfg.Execute, btnCfg.Interval)
 			} else {
 				logger.Debugf("Execute: %s", btnCfg.Execute)
 				go execCommand(btnCfg.Row, btnCfg.Column, btnCfg.Execute, MAIN_COMMAND)
