@@ -32,10 +32,10 @@ func sendStdin(row, col int, command string) {
 	pid := btn.GetPid()
 	for _, cmd := range commands {
 		if cmd != nil && cmd.Process.Pid == pid {
-			logger.Debugf("Send stdin to command (row: %d, col: %d, cmd: %s) %s", row, col, cmd, command)
+			logger.Debugf("Send stdin to command (row: %d, col: %d, pid: %d) %s", row, col, pid, command)
 			pipe := state.GetPipe(row, col)
 			if pipe == nil {
-				logger.Errorf("Process not found (row: %d, col: %d, cmd: %s)", row, col, cmd)
+				logger.Errorf("Process not found (row: %d, col: %d, pid: %d)", row, col, pid)
 			} else {
 				(*pipe).Write([]byte(command))
 			}
@@ -73,16 +73,18 @@ func execCommand(row, col int, command string, cmdType CommandType) {
 
 		monitorCommand(cmd)
 		cmd.Start()
+		pid = cmd.Process.Pid
+		logger.Debugf("Command started (row: %d, col: %d, pid: %d, cmd: %s)", row, col, pid, cmd)
 
 		if cmdType == MAIN_COMMAND {
-			btn.SetPid(cmd.Process.Pid)
+			btn.SetPid(pid)
 		}
 
 		scanner := bufio.NewScanner(stdout)
 		for scanner.Scan() {
 			m := scanner.Text()
 
-			logger.Debugf("Recievied response (row: %d, col: %d, cmd: %s) %s", row, col, cmd, m)
+			logger.Debugf("Recievied response (row: %d, col: %d, pid: %d) %s", row, col, pid, m)
 
 			update := types.NewUpdateButton()
 			btn := state.GetButton(row, col)
