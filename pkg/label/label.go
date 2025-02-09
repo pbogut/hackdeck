@@ -12,9 +12,9 @@ import (
 	"math"
 	"strings"
 
-	"github.com/golang/freetype/truetype"
 	"github.com/pbogut/hackdeck/pkg/logger"
 	"golang.org/x/image/font"
+	"golang.org/x/image/font/opentype"
 	"golang.org/x/image/math/fixed"
 )
 
@@ -44,9 +44,8 @@ func generateImage(text string, size float64, margin int, fg *image.Uniform) str
 	height := 250
 	dpi := 72.0
 	lineheight := 1.2
-	hinting := "none"
 
-	f, err := truetype.Parse(fontBytes)
+	f, err := opentype.Parse(fontBytes)
 	if err != nil {
 		logger.Error("Fant parsing error:", err)
 		return ""
@@ -55,28 +54,28 @@ func generateImage(text string, size float64, margin int, fg *image.Uniform) str
 	rgba := image.NewRGBA(image.Rect(0, 0, width, height))
 	draw.Draw(rgba, rgba.Bounds(), image.Transparent, image.Point{0, 0}, draw.Src)
 
+	// h := font.HintingNone
 	h := font.HintingFull
-	switch hinting {
-	case "full":
-		h = font.HintingFull
+
+	face, err := opentype.NewFace(f, &opentype.FaceOptions{
+		Size:    size,
+		DPI:     dpi,
+		Hinting: h,
+	})
+	if err != nil {
+		logger.Error("Can not create new font face.")
+		return ""
 	}
+
 	drawer := &font.Drawer{
-		Dst: rgba,
-		Src: fg,
-		Face: truetype.NewFace(f, &truetype.Options{
-			Size:    size,
-			DPI:     dpi,
-			Hinting: h,
-		}),
+		Dst:  rgba,
+		Src:  fg,
+		Face: face,
 	}
 	outline := &font.Drawer{
-		Dst: rgba,
-		Src: image.Black,
-		Face: truetype.NewFace(f, &truetype.Options{
-			Size:    size,
-			DPI:     dpi,
-			Hinting: h,
-		}),
+		Dst:  rgba,
+		Src:  image.Black,
+		Face: face,
 	}
 	lines := strings.Split(strings.Trim(text, "\n"), "\n")
 	dy := int(math.Ceil(size * lineheight))
