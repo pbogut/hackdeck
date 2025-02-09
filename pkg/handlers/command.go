@@ -82,8 +82,7 @@ func execCommand(row, col int, command string, cmdType CommandType) {
 		for scanner.Scan() {
 			m := scanner.Text()
 
-			logger.Debugf("Recievied response (row: %d, col: %d, cmd: %s)", row, col, cmd)
-			logger.Debugf("Response: %s", m)
+			logger.Debugf("Recievied response (row: %d, col: %d, cmd: %s) %s", row, col, cmd, m)
 
 			update := types.NewUpdateButton()
 			btn := state.GetButton(row, col)
@@ -127,7 +126,7 @@ func startExecute() {
 				logger.Debugf("Interval (%d): %s", btnCfg.Interval, btnCfg.Execute)
 				go handleCommandInterval(btnCfg.Row, btnCfg.Column, btnCfg.Execute, btnCfg.Interval)
 			} else {
-				logger.Debugf("Execute: %s", btnCfg.Execute)
+				logger.Debug("Execute:", btnCfg.Execute)
 				go execCommand(btnCfg.Row, btnCfg.Column, btnCfg.Execute, MAIN_COMMAND)
 			}
 		}
@@ -145,7 +144,7 @@ func execAction(row, col, status int) {
 }
 
 func monitorCommand(cmd *exec.Cmd) {
-	logger.Debugf("Add command: %s", cmd)
+	logger.Debug("Add command:", cmd)
 	commandsMutex.Lock()
 	commands = append(commands, cmd)
 	commandsMutex.Unlock()
@@ -155,7 +154,7 @@ func releaseCommand(cmd *exec.Cmd) {
 	commandsMutex.Lock()
 	for i, c := range commands {
 		if c == cmd {
-			logger.Debugf("Remove command: %s", cmd)
+			logger.Debug("Remove command:", cmd)
 			commands[i] = commands[len(commands)-1]
 			commands = commands[:len(commands)-1]
 		}
@@ -166,7 +165,7 @@ func releaseCommand(cmd *exec.Cmd) {
 func killMonitoredCommands() {
 	logger.Debugf("Kill all commands #%d", len(commands))
 	for _, cmd := range commands {
-		logger.Debugf("Kill command: %s", cmd)
+		logger.Debug("Kill command:", cmd)
 		cmd.Process.Kill()
 	}
 }
@@ -210,7 +209,7 @@ func RegisterClient(client *websocket.Conn) {
 
 func Broadcast(msg []byte) {
 	for i, client := range clients {
-		logger.Debugf("Broadcasting message to client: %d", i)
+		logger.Debug("Broadcasting message to client:", i)
 		client.WriteMessage(websocket.TextMessage, msg)
 	}
 }

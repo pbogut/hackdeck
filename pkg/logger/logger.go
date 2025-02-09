@@ -1,6 +1,8 @@
 package logger
 
-import "log"
+import (
+	"log"
+)
 
 const (
 	DEBUG = iota
@@ -16,9 +18,17 @@ func Init(l int) {
 	level = l
 }
 
+func messageToSlice(prefix, message string, slice []any) []any {
+	v := make([]any, 2, len(slice)+2)
+	v[0] = prefix
+	v[1] = message
+	v = append(v, slice...)
+	return v
+}
+
 func Error(message string, v ...any) {
 	if ERROR >= level {
-		log.Printf("[ERROR] %s %v", message, v)
+		log.Println(messageToSlice("[ERROR]", message, v)...)
 	}
 }
 
@@ -30,7 +40,7 @@ func Errorf(message string, v ...any) {
 
 func Info(message string, v ...any) {
 	if INFO >= level {
-		log.Printf("[INFO] %s %v", message, v)
+		log.Println(messageToSlice("[INFO]", message, v)...)
 	}
 }
 
@@ -42,7 +52,8 @@ func Infof(message string, v ...any) {
 
 func Debug(message string, v ...any) {
 	if DEBUG >= level {
-		log.Printf("[DEBUG] %s %v", message, v)
+		msg := messageToSlice("[DEBUG]", message, v)
+		log.Println(msg...)
 	}
 }
 func Debugf(message string, v ...any) {
@@ -53,7 +64,7 @@ func Debugf(message string, v ...any) {
 
 func Warn(message string, v ...any) {
 	if WARN >= level {
-		log.Printf("[WARN] %s %v", message, v)
+		log.Println(messageToSlice("[WARN]", message, v)...)
 	}
 }
 
@@ -64,9 +75,9 @@ func Warnf(message string, v ...any) {
 }
 
 func Fatal(message string, v ...any) {
-	log.Printf("[FATAL] %s %v", message, v)
+	log.Fatal(messageToSlice("[FATAL]", message, v)...)
 }
 
 func Fatalf(message string, v ...any) {
-	log.Printf("[FATAL] "+message, v...)
+	log.Fatalf("[FATAL] "+message, v...)
 }

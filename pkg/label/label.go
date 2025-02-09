@@ -48,7 +48,7 @@ func generateImage(text string, size float64, margin int, fg *image.Uniform) str
 
 	f, err := truetype.Parse(fontBytes)
 	if err != nil {
-		logger.Errorf("Fant parsing error: %s", err)
+		logger.Error("Fant parsing error:", err)
 		return ""
 	}
 	// Draw the background
@@ -118,7 +118,7 @@ func parseHexColor(s string) (c color.RGBA, err error) {
 	}
 
 	if s[0] != '#' {
-		logger.Errorf("Color must start with #: %s", s)
+		logger.Error("Color must start with #:", s)
 		return c, errInvalidFormat
 	}
 
@@ -146,7 +146,7 @@ func parseHexColor(s string) (c color.RGBA, err error) {
 		c.B = hexToByte(s[3]) * 17
 	default:
 		err = errInvalidFormat
-		logger.Errorf("Color format is invalid: %s", s)
+		logger.Error("Color format is invalid:", s)
 		return c, err
 	}
 	return c, nil

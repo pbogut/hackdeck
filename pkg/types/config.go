@@ -60,21 +60,21 @@ func ReadConfig() Config {
 	}
 
 	configFile := configdir.LocalConfig("hackdeck", "hackdeck.toml")
-	logger.Debugf("Looking for config file: %s", configFile)
+	logger.Debug("Looking for config file:", configFile)
 	_, err := os.Stat(configFile)
 	if err != nil {
-		logger.Debugf("Config not found: %s", configFile)
+		logger.Debug("Config not found:", configFile)
 		configFile = "hackdeck.toml"
-		logger.Debugf("Looking for config file: %s", configFile)
+		logger.Debug("Looking for config file:", configFile)
 	}
 
 	_, err = os.Stat(configFile)
 	if err != nil {
-		logger.Debug("Config not found: ", configFile)
+		logger.Debug("Config not found:", configFile)
 		return config
 	}
 
-	logger.Debugf("Config file found: %s", configFile)
+	logger.Debug("Config file found:", configFile)
 
 	if _, err := toml.DecodeFile(configFile, &config); err != nil {
 		logger.Error("Error while decoding config file:", err)
