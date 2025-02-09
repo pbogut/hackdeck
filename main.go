@@ -28,7 +28,7 @@ func main() {
 	http.HandleFunc("/ping", handlers.PingHandler)
 	http.HandleFunc("/reload", handlers.ReloadHandler)
 	// Start the HTTP server on port 8191
-	logger.Infof("Starting server on %s", addr)
+	fmt.Printf("Starting server on %s\n", addr)
 	if err := http.ListenAndServe(addr, nil); err != nil {
 		logger.Fatal("Error starting server:", err)
 	}
