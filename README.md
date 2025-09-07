@@ -3,6 +3,10 @@
 This is alternative server implementation for Macro Deck client apps.
 Tested with Web and Android clients, written in Go.
 
+## Demo
+
+https://github.com/user-attachments/assets/049a1e5a-1dc0-47d4-a483-c8d17e7412d0
+
 ## Installation
 
 ```bash
